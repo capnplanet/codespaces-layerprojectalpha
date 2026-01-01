@@ -24,12 +24,24 @@ class PolicyEngine:
     def evaluate(self, role: str, query: str, experts: List[str]) -> PolicyDecision:
         rules_fired: List[str] = []
         decision = "allow"
-        # basic allow/deny based on role and disallowed intents
         for name, policy in self.policies.items():
+            enforce = policy.get("enforce_always", False)
+            keywords = policy.get("applies_keywords", [])
+            applies = enforce or any(k in query.lower() for k in keywords)
             disallowed_intents = policy.get("disallowed_intents", [])
+            if any(intent in query.lower() for intent in disallowed_intents):
+                applies = True
+            if not applies:
+                continue
             if any(intent in query.lower() for intent in disallowed_intents):
                 decision = "deny"
                 rules_fired.append(f"{name}:intent-deny")
+            allowed_experts = policy.get("allowed_experts")
+            if allowed_experts:
+                disallowed = [e for e in experts if e not in allowed_experts]
+                if disallowed:
+                    decision = "deny"
+                    rules_fired.append(f"{name}:expert-deny")
             if role == "user" and policy.get("restricted_tools"):
                 blocked = [e for e in experts if e in policy.get("restricted_tools")]
                 if blocked:

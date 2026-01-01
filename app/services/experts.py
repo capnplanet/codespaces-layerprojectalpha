@@ -1,7 +1,11 @@
-import random
 import time
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Protocol
 from hashlib import sha256
+
+
+class SupportsSearch(Protocol):
+    def search(self, query: str) -> List[Dict]:
+        ...
 
 class ExpertResponse:
     def __init__(self, answer: str, cost: int, latency_ms: int, confidence: float, metadata: Dict):
@@ -71,7 +75,7 @@ class RetrieverExpert(BaseExpert):
     cost_per_call = 8
     latency_range = (60, 90)
 
-    def __init__(self, retriever: "Retriever"):
+    def __init__(self, retriever: SupportsSearch):
         self.retriever = retriever
 
     def run(self, prompt: str) -> ExpertResponse:
@@ -82,14 +86,3 @@ class RetrieverExpert(BaseExpert):
         return ExpertResponse(snippets, self.cost_per_call, latency_ms, 0.6, {"docs": docs})
 
 
-class Retriever:
-    def __init__(self, index: List[Dict]):
-        self.index = index
-
-    def search(self, query: str) -> List[Dict]:
-        scored = []
-        for doc in self.index:
-            score = query.lower().count(doc["title"].lower()) + random.random() * 0.01
-            scored.append((score, doc))
-        scored.sort(key=lambda x: x[0], reverse=True)
-        return [d for _, d in scored[:3]]

@@ -11,3 +11,8 @@ disallowed_intents:
   - export
 max_retention_days: 1
 required_citations: true
+applies_keywords:
+  - high
+  - risk
+  - confidential
+  - export

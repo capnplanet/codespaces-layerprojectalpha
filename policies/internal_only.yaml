@@ -10,3 +10,6 @@ disallowed_intents:
   - external
 max_retention_days: 7
 required_citations: true
+applies_keywords:
+  - internal
+  - docs

@@ -3,12 +3,14 @@ import time
 import uuid
 from typing import Dict, Any, List
 from hashlib import sha256
+from pathlib import Path
 from sqlalchemy.orm import Session
-from app.services.experts import BaseExpert, Retriever, RetrieverExpert, ExpertResponse
+from app.services.experts import BaseExpert, RetrieverExpert, ExpertResponse
 from app.services.router import build_router, choose_experts, RouterDecision
 from app.services.policy import PolicyEngine, PolicyDecision
 from app.services.audit import AuditService
 from app.services.memory import MemoryService
+from app.services.retrieval import HybridRetriever
 from app.schemas.common import Citation
 from app.core.security import sign_hmac
 from app.core.config import get_settings
@@ -27,12 +29,9 @@ def compute_hash(payload: Dict[str, Any]) -> str:
 
 
 def build_retriever() -> RetrieverExpert:
-    docs = [
-        {"id": "doc1", "title": "policy", "text": "Policy overview and constraints."},
-        {"id": "doc2", "title": "routing", "text": "Routing logic for experts."},
-        {"id": "doc3", "title": "budget", "text": "Budget rules for cost and latency."},
-    ]
-    return RetrieverExpert(Retriever(docs))
+    corpus_path = Path("data/docs")
+    retriever = HybridRetriever.load_from_path(corpus_path)
+    return RetrieverExpert(retriever)
 
 
 class Orchestrator:

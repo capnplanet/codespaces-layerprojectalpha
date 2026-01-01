@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session, declarative_base
 from app.core.config import get_settings
@@ -9,9 +8,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, futu
 Base = declarative_base()
 
 
-@contextmanager
-def get_db() -> Session:
-    db = SessionLocal()
+def get_db():
+    db: Session = SessionLocal()
     try:
         yield db
     finally:

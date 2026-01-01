@@ -1,8 +1,8 @@
 # darpaa-moe-intermediary-layer
 
-Offline-first, DARPA-style MoE intermediary layer with FastAPI, Postgres, Redis, Celery, OpenTelemetry, Prometheus, and policy-as-code.
+Offline-first, DARPA-style MoE intermediary layer with FastAPI, Postgres, Redis, Celery, OpenTelemetry, Prometheus, Grafana, and policy-as-code.
 
-Design notes: offline-first, zero-trust defaults, FIPS-friendly crypto (SHA-256 HMAC), cloud-agnostic via Docker Compose, reproducible builds via pinned Python version and container image.
+Design notes: offline-first, zero-trust defaults, FIPS-friendly crypto (SHA-256 HMAC), cloud-agnostic via Docker Compose, reproducible builds via pinned Python version and container image, rate limiting via SlowAPI, RBAC on sensitive endpoints, hybrid retrieval (BM25 + dense fallback), Grafana dashboards provisioned, SLSA provenance workflow.
 
 ## Quickstart (Codespaces or local)
 1. `make install`
@@ -15,7 +15,7 @@ API runs on http://localhost:8000.
 - Query: `curl -X POST http://localhost:8000/v1/query -H 'Content-Type: application/json' -d '{"query":"Explain routing policy", "session_id":"s1"}'`
 - Replay: `curl http://localhost:8000/v1/replay/<trace_id>`
 - Audit: `curl http://localhost:8000/v1/audit/<trace_id>`
-- Eval: `curl -X POST http://localhost:8000/v1/eval/run -H 'Content-Type: application/json' -d '{"dataset":"demo"}'`
+- Eval (admin): `curl -X POST http://localhost:8000/v1/eval/run -H 'Authorization: Bearer <token>' -H 'Content-Type: application/json' -d '{"dataset":"demo"}'`
 - Go variant: `go run ./go` then `curl -X POST http://localhost:9000/v1/query -d '{"query":"test"}'`
 
 ## Make targets
@@ -24,6 +24,16 @@ API runs on http://localhost:8000.
 - `make typecheck` – mypy
 - `make test` – pytest
 - `make sbom` – CycloneDX SBOM (satisfies SBOM requirement; pair with SLSA provenance in CI pipelines)
+
+## Observability
+- Prometheus scrape `/metrics`
+- Grafana auto-provisioned (see grafana/provisioning)
+- OpenTelemetry exporter to otel-collector (compose)
+
+## Access control & safety
+- Rate limiting via SlowAPI middleware
+- RBAC: admin-only for audit, eval, policy validation (Bearer token optional; falls back to payload role)
+- Policy enforcement with allowed/restricted tools and intents
 
 ## Security and determinism
 - HMAC-signed audit logs

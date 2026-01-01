@@ -1,10 +1,11 @@
 import json
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 from pathlib import Path
 from app.core.database import get_db
 from app.core.config import get_settings
+from app.core.security import decode_token
 from app.services.policy import PolicyEngine
 from app.services.audit import AuditService
 from app.services.memory import MemoryService
@@ -26,6 +27,17 @@ def build_services(db: Session):
     return orchestrator, policy_engine, audit
 
 
+def resolve_role(payload_role: str, authorization: str | None) -> str:
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization.split(" ", 1)[1]
+        try:
+            _, role = decode_token(token)
+            return role or payload_role
+        except Exception:
+            return payload_role
+    return payload_role
+
+
 @router.get("/healthz", response_class=PlainTextResponse)
 def healthz():
     return "ok"
@@ -37,14 +49,15 @@ def readyz():
 
 
 @router.post("/v1/query", response_model=QueryResponse)
-def query(payload: QueryRequest, db: Session = Depends(get_db)):
+def query(payload: QueryRequest, db: Session = Depends(get_db), authorization: str | None = Header(default=None)):
     orchestrator, policy_engine, _ = build_services(db)
+    role = resolve_role(payload.role, authorization)
     response = orchestrator.handle_query(
         query=payload.query,
         session_id=payload.session_id or "anon",
         budget_latency_ms=min(payload.budget_latency_ms, settings.max_latency_ms),
         budget_cost_units=min(payload.budget_cost_units, settings.max_cost_units),
-        role=payload.role,
+        role=role,
     )
     return response
 
@@ -61,19 +74,28 @@ def replay(trace_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/v1/audit/{trace_id}")
-def audit(trace_id: str, db: Session = Depends(get_db)):
+def audit(trace_id: str, db: Session = Depends(get_db), authorization: str | None = Header(default=None)):
+    role = resolve_role("user", authorization)
+    if role != "admin":
+        raise HTTPException(status_code=403, detail="forbidden")
     return db.query(Trace).filter(Trace.trace_id == trace_id).first()
 
 
 @router.post("/v1/policy/validate")
-def validate_policy(request: PolicyValidationRequest):
+def validate_policy(request: PolicyValidationRequest, authorization: str | None = Header(default=None)):
+    role = resolve_role("user", authorization)
+    if role != "admin":
+        raise HTTPException(status_code=403, detail="forbidden")
     engine = PolicyEngine(Path("policies"))
     decision = engine.evaluate("admin", json.dumps(request.policy), [])
     return decision.model_dump()
 
 
 @router.post("/v1/eval/run")
-def eval_run(request: EvalRequest, db: Session = Depends(get_db)):
+def eval_run(request: EvalRequest, db: Session = Depends(get_db), authorization: str | None = Header(default=None)):
+    role = resolve_role("user", authorization)
+    if role != "admin":
+        raise HTTPException(status_code=403, detail="forbidden")
     dataset_path = Path("eval/datasets") / f"{request.dataset}.txt"
     if not dataset_path.exists():
         raise HTTPException(status_code=404, detail="Dataset not found")

@@ -9,3 +9,4 @@ restricted_tools: []
 disallowed_intents: []
 max_retention_days: 30
 required_citations: false
+enforce_always: true

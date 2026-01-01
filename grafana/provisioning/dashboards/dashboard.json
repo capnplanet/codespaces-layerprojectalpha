@@ -1,0 +1,25 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "panels": [
+    {
+      "type": "graph",
+      "title": "API Latency",
+      "targets": [
+        {"expr": "api_request_latency_ms_sum / api_request_latency_ms_count", "legendFormat": "avg"}
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+    },
+    {
+      "type": "graph",
+      "title": "API Requests",
+      "targets": [
+        {"expr": "api_requests_total", "legendFormat": "{{endpoint}} {{status}}"}
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+    }
+  ],
+  "schemaVersion": 37,
+  "version": 1,
+  "title": "Intermediary Layer"
+}
