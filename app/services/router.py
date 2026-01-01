@@ -1,6 +1,13 @@
 from dataclasses import dataclass
 
-from app.services.experts import BaseExpert, ExpertLarge, ExpertSmall, RetrieverExpert, ToolExpert
+from app.services.experts import (
+    BaseExpert,
+    ExpertLarge,
+    ExpertSmall,
+    ProviderExpertLLM,
+    RetrieverExpert,
+    ToolExpert,
+)
 
 
 @dataclass
@@ -130,6 +137,17 @@ class Router:
         )
 
 
-def build_router(retriever: RetrieverExpert) -> Router:
-    experts: list[BaseExpert] = [ExpertSmall(), ExpertLarge(), ToolExpert(), retriever]
+def build_router(
+    retriever: RetrieverExpert,
+    provider_expert: ProviderExpertLLM | None = None,
+    tool_expert: BaseExpert | None = None,
+) -> Router:
+    experts: list[BaseExpert] = [
+        ExpertSmall(),
+        ExpertLarge(),
+        tool_expert or ToolExpert(),
+        retriever,
+    ]
+    if provider_expert:
+        experts.append(provider_expert)
     return Router(experts)

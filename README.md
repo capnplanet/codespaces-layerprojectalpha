@@ -11,6 +11,13 @@ Design notes: offline-first, zero-trust defaults, FIPS-friendly crypto (SHA-256 
 
 API runs on http://localhost:8000.
 
+### Provider configuration (Phase 1)
+- `LLM_ENABLED=true` to turn on real providers (defaults to offline deterministic mode)
+- `LLM_PROVIDER=openai|anthropic` (default `openai`)
+- `LLM_MODEL=gpt-4o-mini` (or `claude-3-5-sonnet-20240620`)
+- `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` must be set for respective providers
+- `OFFLINE_MODE=true` forces deterministic experts even when keys exist
+
 ## Demo
 - Query: `curl -X POST http://localhost:8000/v1/query -H 'Content-Type: application/json' -d '{"query":"Explain routing policy", "session_id":"s1"}'`
 - Replay: `curl http://localhost:8000/v1/replay/<trace_id>`
@@ -37,6 +44,12 @@ API runs on http://localhost:8000.
 - Policy: intent classification + role allow/deny + on-disk hot reload of YAML policies.
 - Eval: JSONL-style cases with `prompt` and `expects` assertions (contains/not_contains), regression diff vs previous run, HTML/JSON reports under `eval/`.
 - Memory: Redis-backed session lists capped to 50 with 24h TTL, simple summary helper for compact recalls.
+
+## Phase 1 additions
+- Real provider adapters for OpenAI and Anthropic with token counting and cost estimation
+- Tool registry + calculator tool with schema validation and policy-aware permission checks
+- Provider/tool call logging into traces and signed audit events
+- Feature flags for offline-only operation to preserve deterministic demo behavior
 
 ## Access control & safety
 - Rate limiting via SlowAPI middleware

@@ -9,3 +9,5 @@ darpaa_moe_intermediary_layer.egg-info/dependency_links.txt
 darpaa_moe_intermediary_layer.egg-info/requires.txt
 darpaa_moe_intermediary_layer.egg-info/top_level.txt
 tests/test_api.py
+tests/test_providers.py
+tests/test_tools_policy.py

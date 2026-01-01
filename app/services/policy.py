@@ -56,6 +56,36 @@ class PolicyEngine:
             return True
         return False
 
+    def is_tool_allowed(self, role: str, tool_name: str, intents: list[str]) -> bool:
+        """Return False when any applicable policy explicitly blocks a tool."""
+        self._maybe_reload()
+        for _, policy in self.policies.items():
+            applies = policy.get("enforce_always", False)
+            keywords = policy.get("applies_keywords", [])
+            if any(k in tool_name for k in keywords):
+                applies = True
+
+            required_intents = policy.get("required_intents", [])
+            if required_intents and not any(i in intents for i in required_intents):
+                continue
+
+            disallowed_tools = cast(list[str], policy.get("restricted_tools") or [])
+            allowed_tools = cast(list[str], policy.get("allowed_tools") or [])
+
+            if tool_name in disallowed_tools or tool_name in allowed_tools:
+                applies = True
+
+            if self._role_blocked(policy, role):
+                applies = True
+
+            if applies and self._role_blocked(policy, role):
+                return False
+            if applies and disallowed_tools and tool_name in disallowed_tools:
+                return False
+            if applies and allowed_tools and tool_name not in allowed_tools:
+                return False
+        return True
+
     def evaluate(self, role: str, query: str, experts: list[str]) -> PolicyDecision:
         self._maybe_reload()
         intents = self._classify_intents(query)

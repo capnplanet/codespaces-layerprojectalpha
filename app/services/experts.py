@@ -2,6 +2,9 @@ import time
 from hashlib import sha256
 from typing import Protocol
 
+from app.providers.base import LLMProvider, ProviderResponse
+from app.tools.registry import ToolExecutor
+
 
 class SupportsSearch(Protocol):
     def search(self, query: str) -> list[dict]: ...
@@ -85,6 +88,85 @@ class ToolExpert(BaseExpert):
             conf = 0.2
         latency_ms = int((time.time() - start) * 1000) + self.latency_range[0]
         return ExpertResponse(answer, self.cost_per_call, latency_ms, conf, {"tool": "calculator"})
+
+
+class ToolRegistryExpert(BaseExpert):
+    name = "tool_calculator"
+    cost_per_call = 3
+    latency_range = (10, 25)
+
+    def __init__(self, executor: ToolExecutor):
+        self.executor = executor
+        self.active_role = "user"
+
+    def run(self, prompt: str) -> ExpertResponse:
+        # Extract expression after keyword to keep compatibility with previous prompt style
+        expr = prompt.replace("calculate", "", 1).strip() or prompt.strip()
+        start = time.time()
+        result = self.executor.execute(
+            tool_name=self.name,
+            payload={"expression": expr},
+            role=self.active_role,
+            intents=["math"] if any(sym in prompt for sym in ["+", "-", "*", "/"]) else ["general"],
+        )
+        latency_ms = int((time.time() - start) * 1000) + self.latency_range[0]
+        if not result.success:
+            return ExpertResponse(
+                answer="Unable to compute",
+                cost=self.cost_per_call,
+                latency_ms=latency_ms,
+                confidence=0.2,
+                metadata={"tool": self.name, "error": result.error},
+            )
+        return ExpertResponse(
+            answer=f"Result: {result.output}",
+            cost=self.cost_per_call,
+            latency_ms=latency_ms,
+            confidence=0.9,
+            metadata={"tool": self.name, "result": result.output},
+        )
+
+
+class ProviderExpertLLM(BaseExpert):
+    name = "provider_llm"
+    cost_per_call = 25
+    latency_range = (200, 600)
+
+    def __init__(self, provider: LLMProvider):
+        self.provider = provider
+        self.name = f"{provider.name}_llm"
+
+    def run(self, prompt: str) -> ExpertResponse:
+        start = time.time()
+        try:
+            result: ProviderResponse = self.provider.generate(prompt)
+        except Exception as exc:
+            latency_ms = int((time.time() - start) * 1000) + self.latency_range[0]
+            return ExpertResponse(
+                answer="provider_error",
+                cost=self.cost_per_call,
+                latency_ms=latency_ms,
+                confidence=0.0,
+                metadata={"provider": self.provider.name, "error": str(exc)},
+            )
+
+        cost_units = max(1, int(result.cost_usd * 1000))
+        latency_ms = result.latency_ms
+        return ExpertResponse(
+            answer=result.text,
+            cost=cost_units,
+            latency_ms=latency_ms,
+            confidence=0.82,
+            metadata={
+                "provider": self.provider.name,
+                "model": result.model,
+                "prompt_tokens": result.prompt_tokens,
+                "completion_tokens": result.completion_tokens,
+                "total_tokens": result.total_tokens,
+                "cost_usd": result.cost_usd,
+                "raw": result.raw_response,
+            },
+        )
 
 
 class RetrieverExpert(BaseExpert):
