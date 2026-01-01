@@ -1,19 +1,21 @@
 import json
-from fastapi import APIRouter, Depends, HTTPException, Header
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
-from pathlib import Path
-from app.core.database import get_db
+
 from app.core.config import get_settings
+from app.core.database import get_db
 from app.core.security import decode_token
-from app.services.policy import PolicyEngine
+from app.models.models import Trace
+from app.schemas.common import EvalRequest, PolicyValidationRequest, QueryResponse
+from app.schemas.request import QueryRequest
 from app.services.audit import AuditService
+from app.services.eval import run_eval
 from app.services.memory import MemoryService
 from app.services.orchestrator import Orchestrator, compute_hash
-from app.services.eval import run_eval
-from app.schemas.request import QueryRequest
-from app.schemas.common import QueryResponse, PolicyValidationRequest, EvalRequest
-from app.models.models import Trace
+from app.services.policy import PolicyEngine
 
 router = APIRouter()
 settings = get_settings()
@@ -49,7 +51,11 @@ def readyz():
 
 
 @router.post("/v1/query", response_model=QueryResponse)
-def query(payload: QueryRequest, db: Session = Depends(get_db), authorization: str | None = Header(default=None)):
+def query(
+    payload: QueryRequest,
+    db: Session = Depends(get_db),  # noqa: B008
+    authorization: str | None = Header(default=None),
+):
     orchestrator, policy_engine, _ = build_services(db)
     role = resolve_role(payload.role, authorization)
     response = orchestrator.handle_query(
@@ -63,7 +69,7 @@ def query(payload: QueryRequest, db: Session = Depends(get_db), authorization: s
 
 
 @router.get("/v1/replay/{trace_id}", response_model=QueryResponse)
-def replay(trace_id: str, db: Session = Depends(get_db)):
+def replay(trace_id: str, db: Session = Depends(get_db)):  # noqa: B008
     trace = db.query(Trace).filter(Trace.trace_id == trace_id).first()
     if not trace or not trace.replayable:
         raise HTTPException(status_code=404, detail="Trace not found or not replayable")
@@ -74,7 +80,11 @@ def replay(trace_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/v1/audit/{trace_id}")
-def audit(trace_id: str, db: Session = Depends(get_db), authorization: str | None = Header(default=None)):
+def audit(
+    trace_id: str,
+    db: Session = Depends(get_db),  # noqa: B008
+    authorization: str | None = Header(default=None),
+):
     role = resolve_role("user", authorization)
     if role != "admin":
         raise HTTPException(status_code=403, detail="forbidden")
@@ -82,7 +92,9 @@ def audit(trace_id: str, db: Session = Depends(get_db), authorization: str | Non
 
 
 @router.post("/v1/policy/validate")
-def validate_policy(request: PolicyValidationRequest, authorization: str | None = Header(default=None)):
+def validate_policy(
+    request: PolicyValidationRequest, authorization: str | None = Header(default=None)
+):
     role = resolve_role("user", authorization)
     if role != "admin":
         raise HTTPException(status_code=403, detail="forbidden")
@@ -92,7 +104,11 @@ def validate_policy(request: PolicyValidationRequest, authorization: str | None 
 
 
 @router.post("/v1/eval/run")
-def eval_run(request: EvalRequest, db: Session = Depends(get_db), authorization: str | None = Header(default=None)):
+def eval_run(
+    request: EvalRequest,
+    db: Session = Depends(get_db),  # noqa: B008
+    authorization: str | None = Header(default=None),
+):
     role = resolve_role("user", authorization)
     if role != "admin":
         raise HTTPException(status_code=403, detail="forbidden")

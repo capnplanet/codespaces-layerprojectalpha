@@ -1,4 +1,5 @@
-from typing import List, Optional, Any
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -11,16 +12,16 @@ class Citation(BaseModel):
 
 class PolicyDecision(BaseModel):
     decision: str
-    rules_fired: List[str]
+    rules_fired: list[str]
 
 
 class QueryResponse(BaseModel):
     trace_id: str
     status: str
-    answer: Optional[str]
+    answer: str | None
     data: Any
-    citations: List[Citation]
-    reason_codes: List[str]
+    citations: list[Citation]
+    reason_codes: list[str]
     confidence: float
     latency_ms: int
     cost_units: int

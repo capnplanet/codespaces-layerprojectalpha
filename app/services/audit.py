@@ -1,7 +1,9 @@
 import json
+
 from sqlalchemy.orm import Session
-from app.models.models import AuditLog
+
 from app.core.security import sign_hmac
+from app.models.models import AuditLog
 
 
 class AuditService:

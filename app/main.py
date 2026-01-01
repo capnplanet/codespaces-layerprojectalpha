@@ -1,17 +1,19 @@
 import time
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-from starlette.responses import Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from slowapi import Limiter
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
+from starlette.responses import Response
+
 from app.api.routes import router
-from app.core.logging import setup_logging
-from app.observability.tracing import setup_tracer
 from app.core.config import get_settings
+from app.core.logging import setup_logging
 from app.observability.metrics import REQUEST_COUNT, REQUEST_LATENCY
+from app.observability.tracing import setup_tracer
 
 settings = get_settings()
 setup_logging()
@@ -20,7 +22,10 @@ setup_tracer(settings.app_name, settings.otel_endpoint)
 app = FastAPI(title=settings.app_name)
 limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute", "10/second"])
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, lambda r, e: JSONResponse(status_code=429, content={"detail": "rate_limited"}))
+app.add_exception_handler(
+    RateLimitExceeded,
+    lambda r, e: JSONResponse(status_code=429, content={"detail": "rate_limited"}),
+)
 app.add_middleware(SlowAPIMiddleware)
 app.include_router(router)
 

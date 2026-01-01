@@ -1,14 +1,14 @@
 import time
-from typing import Dict, Tuple, List, Protocol
 from hashlib import sha256
+from typing import Protocol
 
 
 class SupportsSearch(Protocol):
-    def search(self, query: str) -> List[Dict]:
-        ...
+    def search(self, query: str) -> list[dict]: ...
+
 
 class ExpertResponse:
-    def __init__(self, answer: str, cost: int, latency_ms: int, confidence: float, metadata: Dict):
+    def __init__(self, answer: str, cost: int, latency_ms: int, confidence: float, metadata: dict):
         self.answer = answer
         self.cost = cost
         self.latency_ms = latency_ms
@@ -19,7 +19,7 @@ class ExpertResponse:
 class BaseExpert:
     name: str = "base"
     cost_per_call: int = 10
-    latency_range: Tuple[int, int] = (50, 100)
+    latency_range: tuple[int, int] = (50, 100)
 
     def run(self, prompt: str) -> ExpertResponse:
         raise NotImplementedError
@@ -35,7 +35,13 @@ class ExpertSmall(BaseExpert):
         deterministic = sha256(prompt.encode()).hexdigest()[:12]
         answer = f"SmallExpert processed: {prompt[:100]} [{deterministic}]"
         latency_ms = int((time.time() - start) * 1000) + self.latency_range[0]
-        return ExpertResponse(answer, self.cost_per_call, latency_ms, 0.55, {"deterministic": deterministic})
+        return ExpertResponse(
+            answer,
+            self.cost_per_call,
+            latency_ms,
+            0.55,
+            {"deterministic": deterministic, "model": "small"},
+        )
 
 
 class ExpertLarge(BaseExpert):
@@ -48,7 +54,13 @@ class ExpertLarge(BaseExpert):
         deterministic = sha256(("large" + prompt).encode()).hexdigest()[:16]
         answer = f"LargeExpert deep answer: {prompt[:100]} [{deterministic}]"
         latency_ms = int((time.time() - start) * 1000) + self.latency_range[0]
-        return ExpertResponse(answer, self.cost_per_call, latency_ms, 0.78, {"deterministic": deterministic})
+        return ExpertResponse(
+            answer,
+            self.cost_per_call,
+            latency_ms,
+            0.78,
+            {"deterministic": deterministic, "model": "large"},
+        )
 
 
 class ToolExpert(BaseExpert):
@@ -60,6 +72,11 @@ class ToolExpert(BaseExpert):
         start = time.time()
         try:
             expr = prompt.replace("calculate", "").strip()
+            if any(
+                sym in expr
+                for sym in ["__", "import", "eval", "exec", "os", "sys", "open", "subprocess"]
+            ):
+                raise ValueError("unsafe expression")
             result = eval(expr, {"__builtins__": {"abs": abs, "round": round}})
             answer = f"Result: {result}"
             conf = 0.9
@@ -84,5 +101,3 @@ class RetrieverExpert(BaseExpert):
         snippets = "; ".join([d["text"][:80] for d in docs])
         latency_ms = int((time.time() - start) * 1000) + self.latency_range[0]
         return ExpertResponse(snippets, self.cost_per_call, latency_ms, 0.6, {"docs": docs})
-
-

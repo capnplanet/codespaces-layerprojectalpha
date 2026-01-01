@@ -30,6 +30,14 @@ API runs on http://localhost:8000.
 - Grafana auto-provisioned (see grafana/provisioning)
 - OpenTelemetry exporter to otel-collector (compose)
 
+## Algorithmic behaviors (current)
+- Router: budget-aware scoring (cost/latency) with math-mandatory override, fallbacks tracked in `reason_codes`.
+- Retrieval: chunked BM25 + optional dense rerank, hash dedup, top-k = 5 with per-chunk scores.
+- Expert fusion: confidence-weighted merge with slight preference for `expert_large`; calculator guarded against unsafe expressions.
+- Policy: intent classification + role allow/deny + on-disk hot reload of YAML policies.
+- Eval: JSONL-style cases with `prompt` and `expects` assertions (contains/not_contains), regression diff vs previous run, HTML/JSON reports under `eval/`.
+- Memory: Redis-backed session lists capped to 50 with 24h TTL, simple summary helper for compact recalls.
+
 ## Access control & safety
 - Rate limiting via SlowAPI middleware
 - RBAC: admin-only for audit, eval, policy validation (Bearer token optional; falls back to payload role)

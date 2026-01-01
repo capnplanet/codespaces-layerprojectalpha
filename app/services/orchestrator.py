@@ -1,30 +1,31 @@
 import json
 import time
 import uuid
-from typing import Dict, Any, List
 from hashlib import sha256
 from pathlib import Path
+from typing import Any
+
 from sqlalchemy.orm import Session
-from app.services.experts import BaseExpert, RetrieverExpert, ExpertResponse
-from app.services.router import build_router, choose_experts, RouterDecision
-from app.services.policy import PolicyEngine, PolicyDecision
-from app.services.audit import AuditService
-from app.services.memory import MemoryService
-from app.services.retrieval import HybridRetriever
-from app.schemas.common import Citation
-from app.core.security import sign_hmac
+
 from app.core.config import get_settings
 from app.models.models import Trace
 from app.observability.metrics import REQUEST_COUNT, REQUEST_LATENCY
+from app.schemas.common import Citation
+from app.services.audit import AuditService
+from app.services.experts import ExpertResponse, RetrieverExpert
+from app.services.memory import MemoryService
+from app.services.policy import PolicyDecision, PolicyEngine
+from app.services.retrieval import HybridRetriever
+from app.services.router import build_router
 
 settings = get_settings()
 
 
-def canonical_json(data: Dict[str, Any]) -> str:
+def canonical_json(data: dict[str, Any]) -> str:
     return json.dumps(data, sort_keys=True, separators=(",", ":"))
 
 
-def compute_hash(payload: Dict[str, Any]) -> str:
+def compute_hash(payload: dict[str, Any]) -> str:
     return sha256(canonical_json(payload).encode()).hexdigest()
 
 
@@ -35,22 +36,32 @@ def build_retriever() -> RetrieverExpert:
 
 
 class Orchestrator:
-    def __init__(self, db: Session, policy_engine: PolicyEngine, audit: AuditService, memory: MemoryService):
+    def __init__(
+        self, db: Session, policy_engine: PolicyEngine, audit: AuditService, memory: MemoryService
+    ):
         self.db = db
         self.policy_engine = policy_engine
         self.audit = audit
         self.memory = memory
         retriever = build_retriever()
-        self.experts, self.router_decision = build_router(retriever)
+        self.router = build_router(retriever)
+        self.experts = self.router.experts
 
-    def handle_query(self, query: str, session_id: str, budget_latency_ms: int, budget_cost_units: int, role: str) -> Dict[str, Any]:
+    def handle_query(
+        self, query: str, session_id: str, budget_latency_ms: int, budget_cost_units: int, role: str
+    ) -> dict[str, Any]:
         start = time.time()
         REQUEST_COUNT.labels("/v1/query", "started").inc()
         normalized = query.strip()
-        classification = {"intent": "general" if "policy" not in query else "policy", "confidence": 0.6}
-        router_decision = choose_experts(query, budget_latency_ms, budget_cost_units, self.experts)
+        classification = {
+            "intent": "general" if "policy" not in query else "policy",
+            "confidence": 0.6,
+        }
+        router_decision = self.router.plan(query, budget_latency_ms, budget_cost_units)
 
-        policy_decision: PolicyDecision = self.policy_engine.evaluate(role, query, router_decision.chosen)
+        policy_decision: PolicyDecision = self.policy_engine.evaluate(
+            role, query, router_decision.chosen
+        )
         if policy_decision.decision == "deny":
             payload = self._pack_response(
                 trace_id=str(uuid.uuid4()),
@@ -69,10 +80,12 @@ class Orchestrator:
             REQUEST_COUNT.labels("/v1/query", "refused").inc()
             return payload
 
-        expert_outputs: List[ExpertResponse] = []
+        expert_outputs: list[ExpertResponse] = []
         cost_accum = 0
-        citations: List[Citation] = []
-        reason_codes = router_decision.reason_codes
+        citations: list[Citation] = []
+        reason_codes = list(router_decision.reason_codes)
+        if router_decision.fallbacks:
+            reason_codes.append("fallback:" + ",".join(router_decision.fallbacks))
         for expert in self.experts:
             if expert.name not in router_decision.chosen:
                 continue
@@ -93,8 +106,7 @@ class Orchestrator:
                     )
             expert_outputs.append(result)
 
-        combined_answer = " | ".join([o.answer for o in expert_outputs]) if expert_outputs else "No answer"
-        confidence = max([o.confidence for o in expert_outputs], default=0.0)
+        combined_answer, confidence = self._fuse_answers(expert_outputs)
         latency_ms = int((time.time() - start) * 1000)
         trace_id = str(uuid.uuid4())
         output_payload = {
@@ -140,20 +152,39 @@ class Orchestrator:
         REQUEST_LATENCY.labels("/v1/query").observe(latency_ms)
         return response_payload
 
+    def _fuse_answers(self, outputs: list[ExpertResponse]) -> tuple[str, float]:
+        if not outputs:
+            return "No answer", 0.0
+        # weighted by confidence; prefer larger model when close
+        weights = []
+        for o in outputs:
+            w = max(o.confidence, 0.05)
+            if o.metadata.get("model") == "large":
+                w *= 1.1
+            weights.append(w)
+        total_w = sum(weights) or 1.0
+        pieces = []
+        agg_conf = 0.0
+        for o, w in zip(outputs, weights, strict=False):
+            pieces.append(o.answer)
+            agg_conf += o.confidence * (w / total_w)
+        fused_answer = " | ".join(pieces)
+        return fused_answer, round(agg_conf, 3)
+
     def _pack_response(
         self,
         trace_id: str,
         status: str,
         answer: Any,
         data: Any,
-        citations: List[Citation],
-        reason_codes: List[str],
+        citations: list[Citation],
+        reason_codes: list[str],
         confidence: float,
         latency_ms: int,
         cost_units: int,
         policy: PolicyDecision,
         replayable: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return {
             "trace_id": trace_id,
             "status": status,

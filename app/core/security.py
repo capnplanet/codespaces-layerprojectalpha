@@ -1,9 +1,9 @@
 import hashlib
 import hmac
-import os
-from typing import Tuple
-from jose import jwt
 from datetime import datetime, timedelta
+
+from jose import jwt
+
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -26,6 +26,6 @@ def create_access_token(subject: str, role: str, expires_minutes: int = 60) -> s
     return jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM)
 
 
-def decode_token(token: str) -> Tuple[str, str]:
+def decode_token(token: str) -> tuple[str, str]:
     payload = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
     return payload.get("sub"), payload.get("role")
