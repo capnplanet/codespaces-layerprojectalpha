@@ -1,0 +1,12 @@
+name: internal_only
+version: v1
+allowed_experts:
+  - retriever
+restricted_tools:
+  - expert_large
+  - expert_small
+  - tool_calculator
+disallowed_intents:
+  - external
+max_retention_days: 7
+required_citations: true

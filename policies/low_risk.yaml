@@ -1,0 +1,11 @@
+name: low_risk
+version: v1
+allowed_experts:
+  - expert_small
+  - expert_large
+  - retriever
+  - tool_calculator
+restricted_tools: []
+disallowed_intents: []
+max_retention_days: 30
+required_citations: false

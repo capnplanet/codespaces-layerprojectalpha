@@ -1,0 +1,13 @@
+name: high_risk
+version: v1
+allowed_experts:
+  - tool_calculator
+restricted_tools:
+  - expert_large
+  - expert_small
+  - retriever
+disallowed_intents:
+  - confidential
+  - export
+max_retention_days: 1
+required_citations: true

@@ -1,0 +1,18 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  logging:
+    loglevel: info
+  prometheus:
+    endpoint: 0.0.0.0:9464
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      exporters: [prometheus, logging]
+    traces:
+      receivers: [otlp]
+      exporters: [logging]
