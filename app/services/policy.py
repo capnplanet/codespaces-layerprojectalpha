@@ -1,4 +1,6 @@
+import json
 import time
+from hashlib import sha256
 from pathlib import Path
 from typing import Any, cast
 
@@ -16,6 +18,7 @@ class PolicyEngine:
         self.policies_path = policies_path
         self.policies = self._load_policies()
         self._last_loaded = time.time()
+        self._version = self._hash_policies(self.policies)
 
     def _load_policies(self) -> dict[str, dict[str, Any]]:
         policies: dict[str, dict[str, Any]] = {}
@@ -23,6 +26,11 @@ class PolicyEngine:
             with open(file, encoding="utf-8") as f:
                 policies[file.stem] = yaml.safe_load(f) or {}
         return policies
+
+    @staticmethod
+    def _hash_policies(policies: dict[str, dict[str, Any]]) -> str:
+        canonical = json.dumps(policies, sort_keys=True, separators=(",", ":"))
+        return sha256(canonical.encode()).hexdigest()
 
     def _maybe_reload(self) -> None:
         newest = max(
@@ -32,6 +40,10 @@ class PolicyEngine:
         if newest > self._last_loaded:
             self.policies = self._load_policies()
             self._last_loaded = time.time()
+            self._version = self._hash_policies(self.policies)
+
+    def version(self) -> str:
+        return self._version
 
     @staticmethod
     def _classify_intents(query: str) -> list[str]:
@@ -133,4 +145,4 @@ class PolicyEngine:
                     decision = "deny"
                     rules_fired.append(f"{name}:tool-block")
 
-        return PolicyDecision(decision=decision, rules_fired=rules_fired)
+        return PolicyDecision(decision=decision, rules_fired=rules_fired, version=self.version())

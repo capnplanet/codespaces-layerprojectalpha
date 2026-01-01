@@ -13,6 +13,7 @@ class Citation(BaseModel):
 class PolicyDecision(BaseModel):
     decision: str
     rules_fired: list[str]
+    version: str | None = None
 
 
 class QueryResponse(BaseModel):

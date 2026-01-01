@@ -7,7 +7,7 @@ from app.tools.registry import ToolExecutor
 
 
 class SupportsSearch(Protocol):
-    def search(self, query: str) -> list[dict]: ...
+    def search(self, query: str, k: int = 5, role: str | None = None) -> list[dict]: ...
 
 
 class ExpertResponse:
@@ -176,10 +176,14 @@ class RetrieverExpert(BaseExpert):
 
     def __init__(self, retriever: SupportsSearch):
         self.retriever = retriever
+        self.active_role = "user"
 
     def run(self, prompt: str) -> ExpertResponse:
         start = time.time()
-        docs = self.retriever.search(prompt)
+        try:
+            docs = self.retriever.search(prompt, role=self.active_role)
+        except TypeError:
+            docs = self.retriever.search(prompt)
         snippets = "; ".join([d["text"][:80] for d in docs])
         latency_ms = int((time.time() - start) * 1000) + self.latency_range[0]
         return ExpertResponse(snippets, self.cost_per_call, latency_ms, 0.6, {"docs": docs})

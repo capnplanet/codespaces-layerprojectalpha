@@ -1,13 +1,21 @@
 import os
+
 os.environ["DATABASE_URL"] = "sqlite:///./test.db"
 os.environ["REDIS_URL"] = "redis://localhost:6379/0"
 
-from fastapi.testclient import TestClient
-from app.main import app
-from app.core.database import Base, engine
+from fastapi.testclient import TestClient  # noqa: E402
+
+from app.core.database import Base, engine  # noqa: E402
+from app.core.security import create_access_token  # noqa: E402
+from app.main import app  # noqa: E402
 
 Base.metadata.create_all(bind=engine)
 client = TestClient(app)
+
+
+def _auth_header(role: str = "user") -> dict[str, str]:
+    token = create_access_token("tester", role)
+    return {"Authorization": f"Bearer {token}"}
 
 
 def test_health():
@@ -17,7 +25,11 @@ def test_health():
 
 
 def test_query_and_replay():
-    resp = client.post("/v1/query", json={"query": "Explain routing policy", "session_id": "s1"})
+    resp = client.post(
+        "/v1/query",
+        headers=_auth_header("user"),
+        json={"query": "Explain routing policy", "session_id": "s1"},
+    )
     assert resp.status_code == 200
     body = resp.json()
     assert body["trace_id"]

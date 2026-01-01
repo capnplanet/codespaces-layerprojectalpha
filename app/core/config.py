@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     anthropic_base_url: str = Field(default="https://api.anthropic.com", alias="ANTHROPIC_BASE_URL")
     tool_max_retries: int = Field(default=2, alias="TOOL_MAX_RETRIES")
     offline_mode: bool = Field(default=True, alias="OFFLINE_MODE")
+    jwt_issuer: str = Field(default="darpaa-layer", alias="JWT_ISSUER")
+    jwt_audience: str = Field(default="layer-clients", alias="JWT_AUDIENCE")
+    dev_auth_enabled: bool = Field(default=True, alias="DEV_AUTH_ENABLED")
+    dev_static_token: str = Field(default="dev-token", alias="DEV_STATIC_TOKEN")
+    retrieval_acl_enabled: bool = Field(default=True, alias="RETRIEVAL_ACL_ENABLED")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

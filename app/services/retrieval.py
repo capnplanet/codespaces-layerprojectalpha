@@ -1,3 +1,4 @@
+import json
 import math
 from hashlib import sha256
 from pathlib import Path
@@ -17,6 +18,8 @@ class HybridRetriever:
         self.corpus = corpus
         self.encoder = None
         self.embeddings: list = []
+        canonical = json.dumps(self.corpus, sort_keys=True, ensure_ascii=False)
+        self.index_version = sha256(canonical.encode()).hexdigest()
         if SentenceTransformer:
             try:
                 self.encoder = SentenceTransformer("all-MiniLM-L6-v2")
@@ -34,10 +37,29 @@ class HybridRetriever:
             text = file.read_text(encoding="utf-8")
             chunks = HybridRetriever._chunk_text(text, chunk_size=160)
             for idx, chunk in enumerate(chunks):
-                docs.append({"id": f"{file.stem}-{idx}", "title": file.stem, "text": chunk})
+                allowed_roles = ["admin", "user"]
+                labels = ["public"]
+                fname = file.stem.lower()
+                if "internal" in fname:
+                    allowed_roles = ["admin"]
+                    labels = ["internal"]
+                doc = {
+                    "id": f"{file.stem}-{idx}",
+                    "title": file.stem,
+                    "text": chunk,
+                    "allowed_roles": allowed_roles,
+                    "labels": labels,
+                }
+                docs.append(doc)
         if not docs:
             docs = [
-                {"id": "fallback-0", "title": "policy", "text": "Fallback policy document."},
+                {
+                    "id": "fallback-0",
+                    "title": "policy",
+                    "text": "Fallback policy document.",
+                    "allowed_roles": ["admin", "user"],
+                    "labels": ["public"],
+                },
             ]
         return HybridRetriever(docs)
 
@@ -100,7 +122,7 @@ class HybridRetriever:
             scores.append((sim, doc))
         return scores
 
-    def search(self, query: str, k: int = 5) -> list[dict]:
+    def search(self, query: str, k: int = 5, role: str | None = None) -> list[dict]:
         bm25 = self._bm25_scores(query)
         dense = self._dense_scores(query)
         combined: dict[str, tuple[float, dict]] = {}
@@ -116,6 +138,9 @@ class HybridRetriever:
         results = []
         seen_hashes = set()
         for score, doc in ranked:
+            allowed_roles = doc.get("allowed_roles") or []
+            if role and allowed_roles and role not in allowed_roles:
+                continue
             doc_hash = sha256(doc["text"].encode()).hexdigest()
             if doc_hash in seen_hashes:
                 continue
