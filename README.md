@@ -4,6 +4,17 @@ Offline-first, DARPA-style MoE intermediary layer with FastAPI, Postgres, Redis,
 
 Design notes: offline-first, zero-trust defaults, FIPS-friendly crypto (SHA-256 HMAC), cloud-agnostic via Docker Compose, reproducible builds via pinned Python version and container image, rate limiting via SlowAPI, RBAC on sensitive endpoints, hybrid retrieval (BM25 + dense fallback), Grafana dashboards provisioned, SLSA provenance workflow.
 
+## 📘 Documentation
+
+**NEW:** For a comprehensive, in-depth explanation of what this system does, how it works, and how to use it across defense, aerospace, biopharma, and commercial domains, see:
+
+👉 **[EXECUTIVE_SUMMARY.md](docs/EXECUTIVE_SUMMARY.md)** - Feynman-style guide covering:
+- High-level architecture and purpose
+- Detailed algorithmic function locations and explanations
+- Cross-domain applications and use cases
+- LLM integration strategies and implementation guides
+- Security model, scaling recommendations, and extensibility
+
 ## Quickstart (Codespaces or local)
 1. `make install`
 2. `make migrate`
