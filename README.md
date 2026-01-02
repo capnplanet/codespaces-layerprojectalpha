@@ -6,14 +6,25 @@ Design notes: offline-first, zero-trust defaults, FIPS-friendly crypto (SHA-256 
 
 ## 📘 Documentation
 
-**NEW:** For a comprehensive, in-depth explanation of what this system does, how it works, and how to use it across defense, aerospace, biopharma, and commercial domains, see:
+**NEW:** Comprehensive documentation now available:
 
 👉 **[EXECUTIVE_SUMMARY.md](docs/EXECUTIVE_SUMMARY.md)** - Feynman-style guide covering:
 - High-level architecture and purpose
 - Detailed algorithmic function locations and explanations
-- Cross-domain applications and use cases
+- Cross-domain applications (defense, aerospace, biopharma, commercial)
 - LLM integration strategies and implementation guides
 - Security model, scaling recommendations, and extensibility
+
+👉 **[ALGORITHM_REFERENCE.md](docs/ALGORITHM_REFERENCE.md)** - Technical reference for all algorithms:
+- Complete algorithm descriptions with complexity analysis
+- Performance benchmarks and tuning parameters
+- Extensibility points and customization examples
+
+👉 **[LLM_INTEGRATION.md](docs/LLM_INTEGRATION.md)** - Step-by-step LLM integration guide:
+- Cloud API integration (OpenAI, Anthropic, Google)
+- Self-hosted models (Llama, Mistral via vLLM/Ollama)
+- Advanced use cases (RAG, Chain-of-Thought, Multi-Agent Debate)
+- Production deployment checklist
 
 ## Quickstart (Codespaces or local)
 1. `make install`
