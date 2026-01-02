@@ -6,10 +6,12 @@ Design notes: offline-first, zero-trust defaults, FIPS-friendly crypto (SHA-256 
 
 ## 📘 Documentation
 
-**NEW:** Comprehensive documentation now available:
+**NEW:** Comprehensive documentation now available - Start with **[Documentation Index](docs/INDEX.md)** for guided navigation.
+
+Key documents:
 
 👉 **[EXECUTIVE_SUMMARY.md](docs/EXECUTIVE_SUMMARY.md)** - Feynman-style guide covering:
-- High-level architecture and purpose
+- High-level architecture and purpose (minimal jargon)
 - Detailed algorithmic function locations and explanations
 - Cross-domain applications (defense, aerospace, biopharma, commercial)
 - LLM integration strategies and implementation guides
