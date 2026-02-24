@@ -1,4 +1,4 @@
-# Feynman-Style Executive Summary: DARPA MoE Intermediary Layer
+# Feynman-Style Executive Summary:  MoE Intermediary Layer
 
 ## What This Repository Is (The Simple Story)
 
