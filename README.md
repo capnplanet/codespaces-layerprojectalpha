@@ -1,6 +1,6 @@
-# darpaa-moe-intermediary-layer
+# moe-intermediary-layer
 
-Offline-first, DARPA-style MoE intermediary layer with FastAPI, Postgres, Redis, Celery, OpenTelemetry, Prometheus, Grafana, and policy-as-code.
+Offline-first, MoE intermediary layer with FastAPI, Postgres, Redis, Celery, OpenTelemetry, Prometheus, Grafana, and policy-as-code.
 
 Design notes: offline-first, zero-trust defaults, FIPS-friendly crypto (SHA-256 HMAC), cloud-agnostic via Docker Compose, reproducible builds via pinned Python version and container image, rate limiting via SlowAPI, RBAC on sensitive endpoints, hybrid retrieval (BM25 + dense fallback), Grafana dashboards provisioned, SLSA provenance workflow.
 
