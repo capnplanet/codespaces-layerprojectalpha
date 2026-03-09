@@ -61,6 +61,33 @@ Measured values:
 - Policy violations: `0`
 - KPI pass: `true`
 
+## Executive Summary (Feynman Style)
+
+Think of this system like a trained operations team handling incoming requests.
+
+- It was consistently fast: almost all requests completed in about one second or less at the slow end (`p95 = 977.229 ms`).
+- It was reliable: all 100 requests completed successfully.
+- It followed governance rules: zero policy violations.
+- It stayed within cost guardrails: average cost was `35.0`, below the threshold of `40`.
+- It met the baseline objective: this run passed all gates for safe, steady operation.
+
+Business interpretation:
+the platform demonstrated a stable operating mode that is fast enough for interactive use, compliant by default, and economically controlled for routine workloads.
+
+## Engineering Summary (Feynman Style)
+
+Treat this as a controlled cruise test rather than a maximum-stress test.
+
+- Load profile: 100 total requests, concurrency 2, paced at `0.8 req/s`.
+- End-to-end outcome: `success=100`, `failed=0`, `refused=0`, `policy_violations=0`.
+- Latency shape: `avg=927.532 ms`, `p50=919.968 ms`, `p95=977.229 ms`, `max=1006.925 ms`.
+- Capacity at this profile: `throughput=0.802 req/s` (as expected for the selected pacing).
+- Cost behavior: `avg=35.0`, `p95=35.0`, `total=3500` cost units.
+- Gate evaluation: pass on all configured thresholds (`p95<=2000`, `throughput>=0.5`, `avg_cost<=40`, `violations==0`).
+
+Engineering interpretation:
+the current HF-backed path is stable under paced baseline load, with predictable latency and cost characteristics, and no policy regressions in the allowed test profile.
+
 Report artifact:
 
 - `eval/perf_baseline_1773070302.json`
