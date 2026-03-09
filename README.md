@@ -11,7 +11,7 @@ Design notes: offline-first, zero-trust defaults, FIPS-friendly crypto (SHA-256 
 Key documents:
 
 👉 **[EXECUTIVE_SUMMARY.md](docs/EXECUTIVE_SUMMARY.md)** - Feynman-style guide covering:
-- High-level architecture and purpose (minimal jargon)
+- High-level architecture and purpose
 - Detailed algorithmic function locations and explanations
 - Cross-domain applications (defense, aerospace, biopharma, commercial)
 - LLM integration strategies and implementation guides
