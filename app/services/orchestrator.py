@@ -1,6 +1,7 @@
 import json
 import time
 import uuid
+from functools import lru_cache
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
@@ -12,7 +13,8 @@ from app.models.models import Trace
 from app.observability.metrics import REQUEST_COUNT, REQUEST_LATENCY
 from app.schemas.common import Citation
 from app.services.audit import AuditService
-from app.services.experts import ExpertResponse, RetrieverExpert
+from app.services.experts import ExpertResponse, HFExpert, RetrieverExpert
+from app.services.hf_client import HFClient
 from app.services.memory import MemoryService
 from app.services.policy import PolicyDecision, PolicyEngine
 from app.services.retrieval import HybridRetriever
@@ -29,10 +31,28 @@ def compute_hash(payload: dict[str, Any]) -> str:
     return sha256(canonical_json(payload).encode()).hexdigest()
 
 
+@lru_cache
 def build_retriever() -> RetrieverExpert:
     corpus_path = Path("data/docs")
     retriever = HybridRetriever.load_from_path(corpus_path)
     return RetrieverExpert(retriever)
+
+
+@lru_cache
+def build_hf_expert() -> HFExpert | None:
+    provider = settings.llm_provider.strip().lower()
+    if provider not in {"hf", "huggingface"}:
+        return None
+    client = HFClient(
+        endpoint_url=settings.hf_endpoint_url,
+        token=settings.hf_token,
+        timeout_ms=settings.hf_timeout_ms,
+        max_retries=settings.hf_max_retries,
+        model=settings.hf_model,
+    )
+    if not client.is_configured():
+        return None
+    return HFExpert(client)
 
 
 class Orchestrator:
@@ -44,7 +64,8 @@ class Orchestrator:
         self.audit = audit
         self.memory = memory
         retriever = build_retriever()
-        self.router = build_router(retriever)
+        hf_expert = build_hf_expert()
+        self.router = build_router(retriever, hf_expert)
         self.experts = self.router.experts
 
     def handle_query(

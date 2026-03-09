@@ -968,6 +968,18 @@ The Go variant (`go/main.go`) demonstrates **polyglot extensibility**—you can 
 
 This is not just a codebase—it's a **framework for building trustworthy AI systems** in high-stakes environments.
 
+## Performance Baseline
+
+For measured end-to-end KPI results (Hugging Face endpoint mode), see:
+
+- [PERFORMANCE_BASELINE.md](PERFORMANCE_BASELINE.md)
+
+That document includes:
+- Baseline run profile and exact benchmark command
+- KPI definitions: p95 latency, throughput, cost units/request, policy compliance
+- Latest measured values and pass/fail status
+- Reproduction steps using Codespaces secrets (`HF_TOKEN`, `HF_ENDPOINT_URL`)
+
 ---
 
 **Next Steps:**

@@ -42,12 +42,26 @@ API runs on http://localhost:8000.
 - Eval (admin): `curl -X POST http://localhost:8000/v1/eval/run -H 'Authorization: Bearer <token>' -H 'Content-Type: application/json' -d '{"dataset":"demo"}'`
 - Go variant: `go run ./go` then `curl -X POST http://localhost:9000/v1/query -d '{"query":"test"}'`
 
+## Hugging Face endpoint mode
+- Codespaces secrets supported: `HF_TOKEN`, `HF_ENDPOINT_URL`
+- Optional: `HF_MODEL`, `HF_TIMEOUT_MS`, `HF_MAX_RETRIES`
+- Enable remote HF expert path with `LLM_PROVIDER=hf`
+- Example:
+	- `export LLM_PROVIDER=hf`
+	- `export HF_TOKEN=...`
+	- `export HF_ENDPOINT_URL=...`
+	- `make up`
+
+When HF settings are missing or provider is not set to `hf`, the API continues in local deterministic expert mode.
+
 ## Make targets
 - `make format` – black + ruff fix
 - `make lint` – ruff + black check
 - `make typecheck` – mypy
 - `make test` – pytest
 - `make sbom` – CycloneDX SBOM (satisfies SBOM requirement; pair with SLSA provenance in CI pipelines)
+- `make perf-baseline` – runs ~100 request E2E baseline benchmark against `/v1/query` (admin role, low concurrency, paced load)
+- `make perf-assert` – runs baseline benchmark with KPI gates: p95 latency, throughput, cost units, policy compliance
 
 ## Observability
 - Prometheus scrape `/metrics`

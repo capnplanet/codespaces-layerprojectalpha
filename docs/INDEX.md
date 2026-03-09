@@ -98,7 +98,23 @@ A Feynman-style explanation covering everything about this repository:
 
 ---
 
-### 5. **Security & Compliance**
+### 5. **Performance Baseline** → [PERFORMANCE_BASELINE.md](PERFORMANCE_BASELINE.md)
+**HF end-to-end KPI definitions and measured baseline results**
+
+**Contents:**
+- Baseline benchmark profile and exact command
+- KPI definitions (p95 latency, throughput, cost units, policy compliance)
+- Latest measured values and pass/fail status
+- Thresholds used for `make perf-assert`
+- Reproduction steps for Codespaces secrets + HF endpoint mode
+
+**Time to read:** 5-10 minutes  
+**Who should read:** Engineers, SRE, MLOps  
+**Format:** Operational runbook + measured metrics
+
+---
+
+### 6. **Security & Compliance**
 
 #### [threat_model.md](threat_model.md)
 **Security threat analysis**
@@ -120,7 +136,7 @@ A Feynman-style explanation covering everything about this repository:
 
 ---
 
-### 6. **Policy & Evidence**
+### 7. **Policy & Evidence**
 
 #### [policy_spec.md](policy_spec.md)
 **Policy engine specification**

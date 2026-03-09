@@ -8,6 +8,12 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
       - SECRET_KEY=dev-secret
+      - LLM_PROVIDER=${LLM_PROVIDER:-local}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - HF_ENDPOINT_URL=${HF_ENDPOINT_URL:-}
+      - HF_MODEL=${HF_MODEL:-}
+      - HF_TIMEOUT_MS=${HF_TIMEOUT_MS:-15000}
+      - HF_MAX_RETRIES=${HF_MAX_RETRIES:-2}
     volumes:
       - .:/workspace
     depends_on:
@@ -24,6 +30,12 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
       - SECRET_KEY=dev-secret
+      - LLM_PROVIDER=${LLM_PROVIDER:-local}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - HF_ENDPOINT_URL=${HF_ENDPOINT_URL:-}
+      - HF_MODEL=${HF_MODEL:-}
+      - HF_TIMEOUT_MS=${HF_TIMEOUT_MS:-15000}
+      - HF_MAX_RETRIES=${HF_MAX_RETRIES:-2}
     volumes:
       - .:/workspace
     depends_on:
@@ -40,7 +52,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
       interval: 5s
       retries: 5
   redis:
@@ -51,7 +63,7 @@ services:
     image: otel/opentelemetry-collector-contrib:0.98.0
     volumes:
       - ./otel-collector-config.yml:/etc/otelcol/config.yaml
-    command: ["--config", "/etc/otelcol/config.yaml"]
+    command: [ "--config", "/etc/otelcol/config.yaml" ]
     ports:
       - "4317:4317"
       - "4318:4318"

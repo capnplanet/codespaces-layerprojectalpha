@@ -10,6 +10,26 @@ This guide shows you how to integrate real Large Language Models (LLMs) into the
 
 ## Integration Options
 
+### Option 0: Hugging Face Endpoint (Integrated in this repo)
+
+This repository now supports a Hugging Face-backed expert path controlled by environment variables.
+
+Set environment variables:
+
+```bash
+export LLM_PROVIDER=hf
+export HF_TOKEN=your_hf_token
+export HF_ENDPOINT_URL=https://your-endpoint-url
+export HF_MODEL=optional-model-id
+export HF_TIMEOUT_MS=15000
+export HF_MAX_RETRIES=2
+```
+
+Notes:
+- `LLM_PROVIDER=hf` enables remote Hugging Face expert calls inside `/v1/query`.
+- If HF variables are not set, the system continues in local deterministic expert mode.
+- Use `make perf-baseline` for baseline measurement and `make perf-assert` for KPI gates.
+
 ### Option 1: Cloud API (OpenAI, Anthropic, Google) - Fastest Setup
 
 **Step 1: Install the SDK**

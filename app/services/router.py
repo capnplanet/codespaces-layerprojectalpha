@@ -1,6 +1,13 @@
 from dataclasses import dataclass
 
-from app.services.experts import BaseExpert, ExpertLarge, ExpertSmall, RetrieverExpert, ToolExpert
+from app.services.experts import (
+    BaseExpert,
+    ExpertLarge,
+    ExpertSmall,
+    HFExpert,
+    RetrieverExpert,
+    ToolExpert,
+)
 
 
 @dataclass
@@ -28,6 +35,7 @@ class Router:
         self.quality_priors: dict[str, float] = {
             "expert_small": 0.55,
             "expert_large": 0.78,
+            "expert_hf": 0.83,
             "tool_calculator": 0.70,
             "retriever": 0.65,
         }
@@ -130,6 +138,8 @@ class Router:
         )
 
 
-def build_router(retriever: RetrieverExpert) -> Router:
+def build_router(retriever: RetrieverExpert, hf_expert: HFExpert | None = None) -> Router:
     experts: list[BaseExpert] = [ExpertSmall(), ExpertLarge(), ToolExpert(), retriever]
+    if hf_expert:
+        experts.append(hf_expert)
     return Router(experts)

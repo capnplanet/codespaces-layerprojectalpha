@@ -3,6 +3,7 @@ version: v1
 allowed_experts:
   - expert_small
   - expert_large
+  - expert_hf
   - retriever
   - tool_calculator
 restricted_tools: []

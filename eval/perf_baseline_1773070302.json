@@ -1,0 +1,40 @@
+{
+  "run": {
+    "timestamp": "2026-03-09T15:31:42.255838+00:00",
+    "api_url": "http://localhost:8000",
+    "requests": 100,
+    "concurrency": 2,
+    "role": "admin",
+    "duration_seconds": 124.75
+  },
+  "counts": {
+    "success": 100,
+    "failed": 0
+  },
+  "latency": {
+    "avg_ms": 927.532,
+    "p50_ms": 919.968,
+    "p95_ms": 977.229,
+    "max_ms": 1006.925
+  },
+  "throughput_rps": 0.802,
+  "cost_units": {
+    "avg": 35.0,
+    "p95": 35.0,
+    "total": 3500
+  },
+  "policy": {
+    "violations": 0
+  },
+  "status_distribution": {
+    "success": 100,
+    "refused": 0,
+    "rate_limited": 0,
+    "http_error": 0,
+    "exception": 0
+  },
+  "kpi": {
+    "pass": true,
+    "failures": []
+  }
+}

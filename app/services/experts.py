@@ -2,6 +2,8 @@ import time
 from hashlib import sha256
 from typing import Protocol
 
+from app.services.hf_client import HFClient
+
 
 class SupportsSearch(Protocol):
     def search(self, query: str) -> list[dict]: ...
@@ -101,3 +103,29 @@ class RetrieverExpert(BaseExpert):
         snippets = "; ".join([d["text"][:80] for d in docs])
         latency_ms = int((time.time() - start) * 1000) + self.latency_range[0]
         return ExpertResponse(snippets, self.cost_per_call, latency_ms, 0.6, {"docs": docs})
+
+
+class HFExpert(BaseExpert):
+    name = "expert_hf"
+    cost_per_call = 25
+    latency_range = (250, 800)
+
+    def __init__(self, client: HFClient):
+        self.client = client
+
+    def run(self, prompt: str) -> ExpertResponse:
+        start = time.time()
+        try:
+            answer, observed_latency_ms, metadata = self.client.generate(prompt)
+            latency_ms = max(observed_latency_ms, int((time.time() - start) * 1000))
+            metadata["model"] = metadata.get("model") or "hf"
+            return ExpertResponse(answer, self.cost_per_call, latency_ms, 0.83, metadata)
+        except Exception as exc:
+            latency_ms = int((time.time() - start) * 1000)
+            return ExpertResponse(
+                answer="HF provider unavailable",
+                cost=0,
+                latency_ms=latency_ms,
+                confidence=0.0,
+                metadata={"provider": "huggingface", "error": str(exc)[:120]},
+            )
