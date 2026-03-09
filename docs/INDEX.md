@@ -114,7 +114,22 @@ A Feynman-style explanation covering everything about this repository:
 
 ---
 
-### 6. **Security & Compliance**
+### 6. **Use Cases and Operational Fit** → [USE_CASES_AND_OPERATIONAL_FIT.md](USE_CASES_AND_OPERATIONAL_FIT.md)
+**Defense and commercial use cases grounded in both architecture and measured baseline behavior**
+
+**Contents:**
+- Defense and commercial application areas
+- What the current repo can credibly claim today
+- What the current baseline proves and what it does not prove
+- Feynman-style framing for operational fit
+
+**Time to read:** 8-12 minutes  
+**Who should read:** Executives, product, engineering, mission owners  
+**Format:** Decision-support narrative tied to current implementation
+
+---
+
+### 7. **Security & Compliance**
 
 #### [threat_model.md](threat_model.md)
 **Security threat analysis**
@@ -136,7 +151,7 @@ A Feynman-style explanation covering everything about this repository:
 
 ---
 
-### 7. **Policy & Evidence**
+### 8. **Policy & Evidence**
 
 #### [policy_spec.md](policy_spec.md)
 **Policy engine specification**
